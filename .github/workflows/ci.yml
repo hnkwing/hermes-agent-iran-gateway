@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  static-checks:
+    name: Static checks (no Hermes needed)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Every module compiles
+        run: python -m compileall -q bale.py rubika.py common.py adapter.py __init__.py tests
+      - name: Manifest parses, env names are UPPER_SNAKE, no invisible unicode
+        run: |
+          python - <<'PY'
+          import re, sys, pathlib
+          src = pathlib.Path("plugin.yaml").read_text(encoding="utf-8")
+          try:
+              import yaml
+          except ImportError:
+              sys.exit("PyYAML missing (pip install pyyaml)")
+          manifest = yaml.safe_load(src)
+          assert manifest["name"] == "iran-messengers", manifest.get("name")
+          assert manifest["kind"] == "platform"
+          for item in manifest.get("requires_env", []) + manifest.get("optional_env", []):
+              assert re.fullmatch(r"[A-Z][A-Z0-9_]*", item["name"]), item
+          bad = {f"U+{ord(ch):04X}" for ch in src if ord(ch) in {0x200B, 0x200C, 0x200D, 0x200E, 0x200F, 0xFEFF, 0x2060}}
+          assert not bad, f"invisible characters in plugin.yaml: {sorted(bad)}"
+          print("static checks OK")
+          PY
+
+  tests:
+    name: Test suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest aiohttp httpx pyyaml
+      - name: Detect a Hermes Agent install (provides the `gateway` package)
+        id: hermes
+        run: |
+          if python -c "import gateway.config" 2>/dev/null; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Hermes Agent ('gateway' package) is not available in this runner."
+            echo "::notice::Install Hermes (https://hermes-agent.nousresearch.com/docs) to exercise all 53 tests."
+          fi
+      - name: Run the suite
+        if: steps.hermes.outputs.present == 'true'
+        run: python -m pytest
+      - name: Smoke test (real discovery → registry → adapter → mock API)
+        if: steps.hermes.outputs.present == 'true'
+        run: |
+          export SMOKE="$RUNNER_TEMP/hermes_smoke"
+          mkdir -p "$SMOKE/plugins" && cp -r . "$SMOKE/plugins/hermes_iran_messengers"
+          HERMES_HOME="$SMOKE" hermes plugins enable iran-messengers
+          HERMES_HOME="$SMOKE" python scripts/smoke_test.py
+      - name: Skipped (no Hermes in runner)
+        if: steps.hermes.outputs.present != 'true'
+        run: |
+          echo "Test suite skipped: adapter tests import gateway.* from a local Hermes install."
+          echo "Locally: cd hermes_iran_messengers && ~/.hermes/hermes-agent/venv/bin/python -m pytest"

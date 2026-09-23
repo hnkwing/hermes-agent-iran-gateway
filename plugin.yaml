@@ -1,0 +1,91 @@
+name: iran-messengers
+label: Iranian messengers - Bale + Rubika
+kind: platform
+version: 1.0.0
+description: >
+  Gateway adapters for two Iranian messengers: Bale (بله, https://docs.bale.ai)
+  and Rubika (روبیکا, https://rubika.ir/botapi).
+
+  Both platforms expose a Telegram-shaped HTTP bot API, so this plugin registers
+  two independent Hermes platforms — ``bale`` and ``rubika`` — that behave like
+  the built-in Telegram adapter: long polling for inbound, JSON POST for
+  outbound, native media in both directions, allowlists / DM pairing, home
+  channels for cron delivery, and inline buttons for approvals and clarify
+  questions (Bale inline keyboards, Rubika chat keypads).
+
+  Only stdlib + httpx are used, so no extra dependency is installed and the
+  plugin works on any network where the platform itself is reachable.
+author: NousResearch community contribution
+license: MIT
+homepage: https://github.com/NousResearch/hermes-agent
+tags: [gateway, messaging, platform, bale, rubika, iran, persian]
+requires_env:
+  - name: BALE_BOT_TOKEN
+    description: "Bale bot token from @botfather in Bale (بازوی بله)"
+    prompt: "Bale bot token"
+    url: "https://docs.bale.ai/"
+    password: true
+  - name: RUBIKA_BOT_TOKEN
+    description: "Rubika bot token from @BotFather in Rubika"
+    prompt: "Rubika bot token"
+    url: "https://rubika.ir/botapi"
+    password: true
+optional_env:
+  - name: BALE_ALLOWED_USERS
+    description: "Comma-separated Bale user IDs allowed to talk to the bot"
+    prompt: "Bale allowed user IDs (comma-separated)"
+    password: false
+  - name: BALE_ALLOW_ALL_USERS
+    description: "Allow any Bale user to trigger the bot (dev only)"
+    prompt: "Bale: allow all users? (true/false)"
+    password: false
+  - name: BALE_HOME_CHANNEL
+    description: "Bale chat ID used for cron results and notifications"
+    prompt: "Bale home channel chat ID (or empty)"
+    password: false
+  - name: BALE_HOME_CHANNEL_NAME
+    description: "Display name for the Bale home channel"
+    prompt: "Bale home channel display name (or empty)"
+    password: false
+  - name: BALE_API_BASE
+    description: "Bale API base URL (default: https://tapi.bale.ai)"
+    prompt: "Bale API base URL"
+    password: false
+  - name: BALE_MARKDOWN
+    description: "Send Bale messages with *bold* Markdown instead of plain text (true/false, default: false)"
+    prompt: "Bale: enable Markdown? (true/false)"
+    password: false
+  - name: BALE_POLL_TIMEOUT
+    description: "Bale long-poll timeout in seconds (default: 25)"
+    prompt: "Bale long-poll timeout seconds"
+    password: false
+  - name: RUBIKA_ALLOWED_USERS
+    description: "Comma-separated Rubika user IDs allowed to talk to the bot"
+    prompt: "Rubika allowed user IDs (comma-separated)"
+    password: false
+  - name: RUBIKA_ALLOW_ALL_USERS
+    description: "Allow any Rubika user to trigger the bot (dev only)"
+    prompt: "Rubika: allow all users? (true/false)"
+    password: false
+  - name: RUBIKA_HOME_CHANNEL
+    description: "Rubika chat ID used for cron results and notifications"
+    prompt: "Rubika home channel chat ID (or empty)"
+    password: false
+  - name: RUBIKA_HOME_CHANNEL_NAME
+    description: "Display name for the Rubika home channel"
+    prompt: "Rubika home channel display name (or empty)"
+    password: false
+  - name: RUBIKA_API_BASE
+    description: "Rubika API base URL (default: https://botapi.rubika.ir/v3)"
+    prompt: "Rubika API base URL"
+    password: false
+  - name: RUBIKA_POLL_INTERVAL
+    description: "Rubika polling interval in seconds (default: 3)"
+    prompt: "Rubika polling interval seconds"
+    password: false
+  - name: RUBIKA_INTERACTIVE
+    description: "Render approval/clarify prompts as Rubika chat-keypad buttons (true/false, default: true)"
+    prompt: "Rubika: enable keypad buttons? (true/false)"
+    password: false
+python_dependencies:
+  - httpx>=0.28,<1.0

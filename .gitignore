@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+.venv/
+venv/
+
+# Local secrets — never commit a bot token
+.env
+*.env
+!.env.example
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
