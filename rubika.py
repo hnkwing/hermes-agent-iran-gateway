@@ -908,6 +908,40 @@ async def _standalone_send(
         return send_error(f"rubika standalone send failed: {exc}")
 
 
+def probe_bot_token(token: str) -> tuple:
+    """Verify a Rubika bot token against ``getMe`` (best effort; never raises)."""
+    from .wizard import http_probe
+
+    base = str(extra_or_secret({}, "api_base", "RUBIKA_API_BASE", DEFAULT_API_BASE) or "").strip()
+    return http_probe(f"{(base or DEFAULT_API_BASE).rstrip('/')}/{token.strip()}/getMe", style="rubika")
+
+
+def interactive_setup() -> None:
+    """``hermes gateway setup`` flow for Rubika (registered as ``setup_fn``).
+
+    Without a ``setup_fn`` the wizard falls through to a static env-var hint and redraws the platform
+    menu, so selecting Rubika looks like "the page reloaded and showed the same menu".
+    """
+    from .wizard import interactive_setup as _setup
+
+    _setup(
+        label="Rubika (روبیکا)",
+        token_env="RUBIKA_BOT_TOKEN",
+        token_question="Rubika bot token",
+        how_to_get="Create a bot in Rubika: open @BotFather, send /newbot and copy the token.",
+        docs_url="https://rubika.ir/botapi",
+        probe=probe_bot_token,
+        allowed_env="RUBIKA_ALLOWED_USERS",
+        allow_all_env="RUBIKA_ALLOW_ALL_USERS",
+        home_env="RUBIKA_HOME_CHANNEL",
+        allowed_question="Allowed Rubika user IDs (comma-separated, leave empty to deny everyone)",
+        allowed_example="Rubika user IDs look like u0ABC123… (the bot logs them for every message).",
+        home_question="Home channel (chat/user ID, leave empty to set later)",
+        api_base_env="RUBIKA_API_BASE",
+        api_base_question="Rubika API base URL (default https://botapi.rubika.ir/v3)",
+    )
+
+
 def register_rubika(ctx: Any) -> None:
     """Register the ``rubika`` platform with the Hermes plugin context."""
     ctx.register_platform(
@@ -919,6 +953,7 @@ def register_rubika(ctx: Any) -> None:
         is_connected=is_connected,
         required_env=["RUBIKA_BOT_TOKEN"],
         install_hint="No extra packages needed (httpx ships with Hermes)",
+        setup_fn=interactive_setup,
         env_enablement_fn=_env_enablement,
         apply_yaml_config_fn=_apply_yaml_config,
         cron_deliver_env_var="RUBIKA_HOME_CHANNEL",

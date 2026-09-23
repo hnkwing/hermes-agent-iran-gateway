@@ -36,6 +36,10 @@ First public release: two Hermes gateway platforms, `bale` and `rubika`.
   connect, outbound send, inbound delivery to the gateway message handler, cron sender) against a
   local mock API. Verified output: `SMOKE OK — discovery + registry + adapter + wire + cron sender
   verified for: bale, rubika`.
+- **`hermes gateway setup` support** (`wizard.py`) — both platforms register a `setup_fn`, so the
+  wizard walks through token → live `getMe` verification → allowlist → home channel → custom API
+  base instead of printing "set these env vars yourself" and redrawing the platform menu (which
+  reads as the setup page reloading and showing the same selection again).
 
 ### Notes
 

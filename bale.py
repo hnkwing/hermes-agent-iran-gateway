@@ -926,6 +926,40 @@ async def _standalone_send(
         return send_error(f"bale standalone send failed: {exc}")
 
 
+def probe_bot_token(token: str) -> tuple:
+    """Verify a Bale bot token against ``getMe`` (best effort; never raises)."""
+    from .wizard import http_probe
+
+    base = str(extra_or_secret({}, "api_base", "BALE_API_BASE", DEFAULT_API_BASE) or "").strip()
+    return http_probe(f"{(base or DEFAULT_API_BASE).rstrip('/')}/bot{token.strip()}/getMe", style="bale")
+
+
+def interactive_setup() -> None:
+    """``hermes gateway setup`` flow for Bale (registered as ``setup_fn``).
+
+    Without a ``setup_fn`` the wizard falls through to a static env-var hint and redraws the platform
+    menu, so selecting Bale looks like "the page reloaded and showed the same menu".
+    """
+    from .wizard import interactive_setup as _setup
+
+    _setup(
+        label="Bale (بله)",
+        token_env="BALE_BOT_TOKEN",
+        token_question="Bale bot token",
+        how_to_get="Create a bot in Bale: open @BotFather, send /newbot and copy the token.",
+        docs_url="https://docs.bale.ai/",
+        probe=probe_bot_token,
+        allowed_env="BALE_ALLOWED_USERS",
+        allow_all_env="BALE_ALLOW_ALL_USERS",
+        home_env="BALE_HOME_CHANNEL",
+        allowed_question="Allowed Bale user IDs (comma-separated, leave empty to deny everyone)",
+        allowed_example="Bale user IDs are numeric, e.g. 123456789 (ask the bot, or check getUpdates).",
+        home_question="Home channel (chat/user ID, leave empty to set later)",
+        api_base_env="BALE_API_BASE",
+        api_base_question="Bale API base URL (default https://tapi.bale.ai)",
+    )
+
+
 def register_bale(ctx: Any) -> None:
     """Register the ``bale`` platform with the Hermes plugin context."""
     ctx.register_platform(
@@ -937,6 +971,7 @@ def register_bale(ctx: Any) -> None:
         is_connected=is_connected,
         required_env=["BALE_BOT_TOKEN"],
         install_hint="No extra packages needed (httpx ships with Hermes)",
+        setup_fn=interactive_setup,
         env_enablement_fn=_env_enablement,
         apply_yaml_config_fn=_apply_yaml_config,
         cron_deliver_env_var="BALE_HOME_CHANNEL",

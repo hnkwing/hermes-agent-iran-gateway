@@ -115,7 +115,22 @@ Never paste a token into a chat, screenshot, commit or issue. Keep it in `~/.her
 
 ## Configuration
 
-### a) Env file (easiest)
+### 0) The `hermes gateway setup` wizard (easiest)
+
+```bash
+hermes gateway setup        # pick "Bale (بله)" or "Rubika (روبیکا)" from the platform menu
+```
+
+The wizard prompts for the token, **verifies it against the live API** (a bad token produces a warning
+and lets you save it anyway), configures the allowed users and the home channel, and tells you to
+restart the gateway. Everything it saves lands in `~/.hermes/.env`.
+
+> ⚠️ If the plugin copy you installed has no `wizard.py` (revisions older than this repo), selecting
+> Bale/Rubika in the wizard only prints one hint line and returns to the same platform menu — which
+> looks like the page reloading. `git pull` and re-copy the folder into `~/.hermes/plugins/`; see
+> `CHANGELOG.md`.
+
+### a) Env file (without the wizard)
 
 ```bash
 hermes config set BALE_BOT_TOKEN "123456:AAA..."
